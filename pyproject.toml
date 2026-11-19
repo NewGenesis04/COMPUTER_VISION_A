@@ -1,0 +1,7 @@
+[project]
+name = "computer-vision-a"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "scikit-learn>=1.9.1",
+]

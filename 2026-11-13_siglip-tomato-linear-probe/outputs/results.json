@@ -1,0 +1,96 @@
+{
+  "model": "google/siglip-base-patch16-224",
+  "classes": [
+    "Immature",
+    "Mature"
+  ],
+  "n_train": 651,
+  "n_val": 140,
+  "n_test": 140,
+  "params_frozen": 92884224,
+  "params_trainable": 1538,
+  "zero_shot_val_acc": 0.7642857142857142,
+  "zero_shot_test_acc": 0.7857142857142857,
+  "linear_probe_test_acc": 0.9928571428571429,
+  "zero_shot_report": {
+    "Immature": {
+      "precision": 0.6842105263157895,
+      "recall": 1.0,
+      "f1-score": 0.8125,
+      "support": 65.0
+    },
+    "Mature": {
+      "precision": 1.0,
+      "recall": 0.6,
+      "f1-score": 0.75,
+      "support": 75.0
+    },
+    "accuracy": 0.7857142857142857,
+    "macro avg": {
+      "precision": 0.8421052631578947,
+      "recall": 0.8,
+      "f1-score": 0.78125,
+      "support": 140.0
+    },
+    "weighted avg": {
+      "precision": 0.8533834586466166,
+      "recall": 0.7857142857142857,
+      "f1-score": 0.7790178571428571,
+      "support": 140.0
+    }
+  },
+  "linear_probe_report": {
+    "Immature": {
+      "precision": 1.0,
+      "recall": 0.9846153846153847,
+      "f1-score": 0.9922480620155039,
+      "support": 65.0
+    },
+    "Mature": {
+      "precision": 0.9868421052631579,
+      "recall": 1.0,
+      "f1-score": 0.9933774834437086,
+      "support": 75.0
+    },
+    "accuracy": 0.9928571428571429,
+    "macro avg": {
+      "precision": 0.993421052631579,
+      "recall": 0.9923076923076923,
+      "f1-score": 0.9928127727296062,
+      "support": 140.0
+    },
+    "weighted avg": {
+      "precision": 0.9929511278195488,
+      "recall": 0.9928571428571429,
+      "f1-score": 0.9928531092091849,
+      "support": 140.0
+    }
+  },
+  "cm_zero_shot_test": [
+    [
+      65,
+      0
+    ],
+    [
+      30,
+      45
+    ]
+  ],
+  "cm_linear_probe_test": [
+    [
+      64,
+      1
+    ],
+    [
+      0,
+      75
+    ]
+  ],
+  "final_train_loss": 0.008409349247813225,
+  "final_val_loss": 0.01843632385134697,
+  "best_epoch": 49,
+  "epochs": 50,
+  "lr": 0.001,
+  "batch_size": 32,
+  "seed": 42
+}

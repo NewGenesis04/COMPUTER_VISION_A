@@ -1,0 +1,11 @@
+torch>=2.1
+torchvision>=0.16
+transformers>=4.40
+sentencepiece
+protobuf
+kagglehub
+scikit-learn
+pandas
+numpy
+matplotlib
+pillow

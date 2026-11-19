@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SigLIP Tomato Probe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fffff8; --fg: #1d1d1b; --muted: #6b6b63; --rule: #e4e2d6; --panel: #f3f1e7;
+  --accent: #a6311f; --green: #2f6b3a; --frozen: #3b6ea8; --frozen-soft: #e3ecf6; --train-soft: #e5f1e6;
+  --stage: #2a2a27;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1b19; --fg: #ecebe3; --muted: #a3a197; --rule: #3a3934; --panel: #262521;
+    --accent: #e8836f; --green: #8fd19a; --frozen: #8db4e2; --frozen-soft: #1f2a38; --train-soft: #1f3324;
+    --stage: #0e0e0d;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1b19; --fg: #ecebe3; --muted: #a3a197; --rule: #3a3934; --panel: #262521;
+  --accent: #e8836f; --green: #8fd19a; --frozen: #8db4e2; --frozen-soft: #1f2a38; --train-soft: #1f3324;
+  --stage: #0e0e0d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--stage); }
+body { font-family: 'Inter', system-ui, sans-serif; color: var(--fg); overflow: hidden; }
+
+/* 1280×720 slide canvas, scaled to fit */
+#deck { position: absolute; top: 50%; left: 50%; width: 1280px; height: 720px; transform-origin: center; }
+.slide {
+  position: absolute; inset: 0; background: var(--bg); padding: 56px 72px 48px;
+  display: none; flex-direction: column;
+}
+.slide.active { display: flex; }
+.slide h1 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 400; font-size: 54px; line-height: 1.1; margin: 0 0 16px; }
+.slide h2 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 400; font-size: 38px; margin: 0 0 6px; }
+.kicker { font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 10px; }
+.lede { font-size: 21px; color: var(--muted); margin: 0 0 22px; max-width: 980px; line-height: 1.45; }
+p, li { font-size: 21px; line-height: 1.5; }
+ul { margin: 0; padding-left: 22px; } li { margin: 6px 0; }
+code, pre { font-family: 'JetBrains Mono', monospace; }
+code { font-size: .85em; background: var(--panel); padding: 1px 6px; border-radius: 4px; }
+pre { background: var(--panel); padding: 16px 20px; border-radius: 6px; font-size: 16px; line-height: 1.5; margin: 0; }
+.c { color: var(--muted); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; flex: 1; min-height: 0; align-items: start; }
+.cols > .fig { align-self: stretch; }
+.cols.wide-left { grid-template-columns: 1.3fr 1fr; }
+.fig { width: 100%; height: 100%; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.fig img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
+.missing { border: 2px dashed var(--rule); color: var(--muted); font-size: 15px; padding: 24px; text-align: center; border-radius: 6px; width: 100%; }
+.big { font-family: 'Source Serif 4', serif; font-size: 72px; line-height: 1; }
+.stat { display: flex; flex-direction: column; gap: 4px; }
+.stat .label { font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.stats { display: flex; gap: 56px; margin: 12px 0 24px; }
+table { border-collapse: collapse; font-size: 19px; width: 100%; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+th { font-weight: 600; color: var(--muted); font-size: 15px; text-transform: uppercase; letter-spacing: .06em; }
+td.num { font-family: 'JetBrains Mono', monospace; font-size: 17px; }
+.note { margin-top: auto; font-size: 14px; color: var(--muted); }
+.callout { background: var(--panel); border-left: 4px solid var(--accent); padding: 14px 18px; border-radius: 4px; font-size: 19px; line-height: 1.45; }
+.footer { position: absolute; bottom: 18px; right: 28px; font-size: 13px; color: var(--muted); }
+.crit { position: absolute; top: 22px; right: 28px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+        color: var(--green); border: 1.5px solid var(--green); border-radius: 99px; padding: 4px 10px; }
+
+/* architecture diagram */
+.arch { display: flex; align-items: center; gap: 14px; margin: 18px 0 26px; }
+.blk { border-radius: 8px; padding: 16px 18px; text-align: center; font-size: 17px; line-height: 1.35; }
+.blk small { display: block; font-size: 13px; color: var(--muted); margin-top: 4px; }
+.blk.io { background: var(--panel); }
+.blk.frozen { background: var(--frozen-soft); border: 2px solid var(--frozen); min-width: 250px; }
+.blk.train { background: var(--train-soft); border: 2px solid var(--green); }
+.arrow { color: var(--muted); font-size: 22px; }
+
+/* confusion matrix */
+.cm { border-collapse: separate; border-spacing: 4px; width: auto; }
+.cm td, .cm th { border: none; text-align: center; padding: 0; }
+.cm td.cell { width: 96px; height: 70px; font-family: 'JetBrains Mono', monospace; font-size: 24px; border-radius: 6px; }
+.cm th { font-size: 12px; padding: 4px; }
+.cm .axis { font-size: 12px; color: var(--muted); }
+
+/* speaker notes */
+#notes { position: fixed; left: 0; right: 0; bottom: 0; max-height: 38vh; overflow: auto; background: var(--bg); color: var(--fg);
+         border-top: 2px solid var(--accent); padding: 14px 22px 18px; font-family: 'Source Serif 4', serif; font-size: 17px; line-height: 1.5; display: none; z-index: 5; }
+body.show-notes #notes { display: block; }
+#notes h4 { margin: 0 0 6px; font-family: 'Inter'; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+#notes .why { color: var(--muted); font-style: italic; }
+.slide aside { display: none; }
+#hud { position: fixed; bottom: 10px; left: 12px; font-size: 12px; color: #999; z-index: 6; }
+body.show-notes #hud { display: none; }
+
+@media print {
+  @page { size: 1280px 720px; margin: 0; }
+  html, body { overflow: visible; height: auto; background: none; }
+  #deck { position: static; transform: none !important; width: 1280px; height: auto; }
+  .slide { display: flex !important; position: relative; width: 1280px; height: 720px; page-break-after: always; break-after: page; }
+  #notes, #hud { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!--
+  RESULTS: after running the notebook, paste the printed results.json here (between the braces).
+  Put the downloaded outputs/ folder next to this file (project/outputs/*.png).
+-->
+<script id="results" type="application/json">
+{
+ "model": "google/siglip-base-patch16-224",
+ "classes": [
+  "Immature",
+  "Mature"
+ ],
+ "n_train": 651,
+ "n_val": 140,
+ "n_test": 140,
+ "params_frozen": 92884224,
+ "params_trainable": 1538,
+ "zero_shot_val_acc": 0.7642857142857142,
+ "zero_shot_test_acc": 0.7857142857142857,
+ "linear_probe_test_acc": 0.9928571428571429,
+ "zero_shot_report": {
+  "Immature": {
+   "precision": 0.6842105263157895,
+   "recall": 1.0,
+   "f1-score": 0.8125,
+   "support": 65.0
+  },
+  "Mature": {
+   "precision": 1.0,
+   "recall": 0.6,
+   "f1-score": 0.75,
+   "support": 75.0
+  },
+  "accuracy": 0.7857142857142857
+ },
+ "linear_probe_report": {
+  "Immature": {
+   "precision": 1.0,
+   "recall": 0.9846153846153847,
+   "f1-score": 0.9922480620155039,
+   "support": 65.0
+  },
+  "Mature": {
+   "precision": 0.9868421052631579,
+   "recall": 1.0,
+   "f1-score": 0.9933774834437086,
+   "support": 75.0
+  },
+  "accuracy": 0.9928571428571429
+ },
+ "cm_zero_shot_test": [
+  [
+   65,
+   0
+  ],
+  [
+   30,
+   45
+  ]
+ ],
+ "cm_linear_probe_test": [
+  [
+   64,
+   1
+  ],
+  [
+   0,
+   75
+  ]
+ ],
+ "final_train_loss": 0.008409349247813225,
+ "final_val_loss": 0.01843632385134697,
+ "best_epoch": 49,
+ "epochs": 50,
+ "lr": 0.001,
+ "batch_size": 32,
+ "seed": 42
+}
+</script>
+
+<div id="deck">
+
+<!-- 1 · Title -->
+<section class="slide">
+  <div style="margin-top:auto">
+    <div class="kicker">Computer Vision A · Pipeline walkthrough</div>
+    <h1>Zero-shot vs a frozen-backbone<br>linear probe: SigLIP on tomato maturity</h1>
+    <p class="lede">How much does a 1,538-parameter head on a frozen SigLIP encoder improve over classifying from text prompts alone?</p>
+  </div>
+  <p class="note">google/siglip-base-patch16-224 · Tomato Maturity Detection &amp; Quality Grading · PyTorch + 🤗 Transformers · Colab T4</p>
+  <aside>
+    <p><b>Say:</b> "I took SigLIP, a vision-language model, and asked one question: how much do I gain over its zero-shot ability by training only a tiny linear layer on top of its frozen image features?"</p>
+    <p class="why">Why open with the question: it frames every later slide as evidence for or against a single claim. Graders like a clear hypothesis.</p>
+  </aside>
+</section>
+
+<!-- 2 · Problem & applications -->
+<section class="slide">
+  <div class="kicker">Problem</div>
+  <h2>Why classify tomato maturity automatically?</h2>
+  <div class="cols">
+    <div>
+      <h3 style="font-size:20px;margin:0 0 8px">The problem</h3>
+      <ul>
+        <li>Harvest timing is conventionally judged <b>by eye, from skin colour</b>.</li>
+        <li>Picking off-peak causes <b>substantial losses</b>, especially for robotic harvesting.</li>
+        <li>Manual inspection is <b>labour-intensive and inefficient</b> for farmers.</li>
+        <li>Expert labels are expensive: this dataset was labelled with an agricultural domain expert.</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="font-size:20px;margin:0 0 8px">Applications</h3>
+      <ul>
+        <li><b>Robotic harvesting</b>: pick only fruit at peak maturity</li>
+        <li><b>Post-harvest sorting &amp; packing lines</b>: route fruit by ripeness</li>
+        <li><b>Quality assessment</b> along the supply chain</li>
+      </ul>
+      <div class="callout" style="margin-top:20px">Why this approach fits: zero-shot needs <b>no labels</b>; a linear probe needs <b>few labels and seconds of compute</b>. One frozen backbone can serve several such tasks, each with its own tiny head.</div>
+    </div>
+  </div>
+  <p class="note">Motivation and applications: Data in Brief (2023), "An extensive real-world in field tomato image dataset…", PMC10618421</p>
+  <aside>
+    <p><b>Say:</b> "Tomato harvest timing is usually judged by eye from skin colour. The dataset authors point out that picking at the wrong ripeness causes substantial losses, especially for harvesting robots, and that manual inspection is slow and labour-intensive. Automating it supports robotic harvesting, sorting and packing lines, and quality checks in the supply chain."</p>
+    <p class="why">Why this framing matters: it justifies the method. Expert labels are costly, so it's worth asking how far you get with zero labels (zero-shot), and how much a handful of labels plus a tiny head adds (linear probe). The "one backbone, many heads" point is a practical bonus. A farm system could add a fresh-vs-defect head on the same frozen features. If asked about deployment: the 93M-parameter encoder still has to run at inference time; freezing makes <i>training</i> cheap, not inference.</p>
+  </aside>
+</section>
+
+<!-- 2 · Pipeline overview -->
+<section class="slide">
+  <div class="kicker">Overview</div>
+  <h2>The pipeline in four steps</h2>
+  <p class="lede">Each step maps to one of the assessment criteria.</p>
+  <table style="margin-top:8px">
+    <tr><th>#</th><th>Step</th><th>What it shows</th></tr>
+    <tr><td>1</td><td><b>Preprocessing hygiene</b></td><td>224×224 · HWC→CHW · normalise to [−1, 1], checked against <code>AutoProcessor</code></td></tr>
+    <tr><td>2</td><td><b>Zero-shot baseline</b>: "before"</td><td>Text prompts, no training · top-1 accuracy + confusion matrix</td></tr>
+    <tr><td>3</td><td><b>Intentional freezing</b></td><td>Vision encoder frozen · only <code>nn.Linear(768, 2)</code> trains · exact parameter counts</td></tr>
+    <tr><td>4</td><td><b>Empirical results</b>: "after"</td><td>Train/val loss curves · zero-shot vs probe accuracy · per-class precision/recall</td></tr>
+  </table>
+  <aside>
+    <p><b>Say:</b> "Four steps, each one a requirement: clean inputs, a baseline before training, deliberate freezing, and a before/after comparison."</p>
+    <p class="why">This is the map of the talk. Point at each row as you name it, then move on quickly.</p>
+  </aside>
+</section>
+
+<!-- 3 · SigLIP -->
+<section class="slide">
+  <div class="kicker">Model</div>
+  <h2>SigLIP: CLIP with a pairwise sigmoid loss</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li><b>Two towers</b>: a ViT-B/16 image encoder and a text encoder, both mapping into a shared 768-d space.</li>
+        <li><b>CLIP</b> trains with a <i>softmax</i> over the whole batch: "which of these N captions matches this image?"</li>
+        <li><b>SigLIP</b> scores <i>each image–text pair independently</i> with a sigmoid: "does this pair match, yes or no?"</li>
+        <li>No batch-wide normalisation → simpler, more memory-efficient, strong at small batch sizes.</li>
+      </ul>
+    </div>
+    <div>
+      <pre><span class="c"># SigLIP pair score</span>
+logit = cos(img, txt)
+        * exp(logit_scale)
+        + logit_bias
+
+<span class="c"># per pair: sigmoid(logit)</span>
+<span class="c"># → class scores need not sum to 1</span></pre>
+    </div>
+  </div>
+  <p class="note">Zhai et al., "Sigmoid Loss for Language Image Pre-Training", ICCV 2023 · arxiv.org/abs/2303.15343</p>
+  <aside>
+    <p><b>Say:</b> "SigLIP is from Google, 2023. It's like CLIP, an image tower and a text tower in a shared space, but instead of a softmax across the whole batch, each image–caption pair is its own yes/no sigmoid question."</p>
+    <p class="why">Why it matters here: the same shared space is what makes zero-shot work. A text vector for "ripe red tomato" lands near photos of ripe tomatoes. If asked "why don't the probabilities sum to 1?": each class is an independent sigmoid, and for top-1 we take the argmax.</p>
+  </aside>
+</section>
+
+<!-- 4 · Data -->
+<section class="slide">
+  <div class="kicker">Data</div>
+  <h2>931 unique original photos, augmented copies excluded</h2>
+  <div class="cols wide-left">
+    <div class="fig"><img src="outputs/samples.png" alt="Sample training images"></div>
+    <div>
+      <ul>
+        <li><b>2 classes</b>: Immature, Mature (~500 originals each as published)</li>
+        <li>The dataset also ships <b>augmented</b> copies (rotated, flipped, zoomed). They were <b>excluded</b>, because random splitting would leak near-duplicates of test images into training.</li>
+        <li>Exact duplicate files removed by MD5 hash → <b>931 unique images</b></li>
+        <li><b>Stratified 70 / 15 / 15</b> split, seed 42 → <span data-r="n_train">~700</span> / <span data-r="n_val">~150</span> / <span data-r="n_test">~150</span></li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">Dataset: Mendeley Data s42kpg8h37 (mirrored on Kaggle) · paper: PMC10618421</p>
+  <aside>
+    <p><b>Say:</b> "One data decision matters a lot. The dataset includes 4,000 augmented images that are just rotated and flipped versions of the 1,000 originals. If I split randomly across all of them, a rotated copy of a test tomato could be in training. That's leakage, and it inflates the score. So I used only the originals, removed byte-identical duplicate files, which left 931 unique images, and used a stratified split: 651 train, 140 validation, 140 test."</p>
+    <p class="why">Why stratified: each split keeps the same 50/50 class balance, so accuracy numbers are comparable across splits.</p>
+  </aside>
+</section>
+
+<!-- 6 · Preprocessing -->
+<section class="slide">
+  <span class="crit">Criterion 2</span>
+  <div class="kicker">Preprocessing hygiene</div>
+  <h2>Match the pre-training input exactly</h2>
+  <div class="cols">
+    <div>
+      <pre><span class="c"># manual pipeline</span>
+img = img.resize((224, 224), BICUBIC)
+x = np.asarray(img)      <span class="c"># (224,224,3) HWC 0–255</span>
+x = x / 255.0            <span class="c"># 0–1</span>
+x = (x - 0.5) / 0.5      <span class="c"># −1–1</span>
+x = torch.from_numpy(x)
+     .permute(2, 0, 1)   <span class="c"># (3,224,224) CHW</span>
+
+<span class="c"># vs AutoProcessor: max |diff| = 0.0078</span>
+<span class="c">#   = 2/255 = one 8-bit pixel level</span>
+<span class="c"># batch → (B, 3, 224, 224) NCHW</span></pre>
+      <p style="font-size:17px;margin-top:14px">Mean = std = (0.5, 0.5, 0.5), from SigLIP's processor config, <b>not</b> CLIP's 0.481…/0.268…</p>
+    </div>
+    <div class="fig"><img src="outputs/patch_grid.png" alt="224x224 image with 14x14 patch grid"></div>
+  </div>
+  <aside>
+    <p><b>Say:</b> "SigLIP was trained on 224-pixel images split into 16-by-16 patches. That's a 14-by-14 grid, 196 tokens. I resize to 224, convert from height-width-channels to channels-first because PyTorch expects that, and normalise to minus one to one with mean and std 0.5. I did it by hand and compared it with the official AutoProcessor. The largest difference was 0.0078, which is one pixel-intensity step, so they match."</p>
+    <p class="why">Why it matters: a model's features only mean something on inputs that look like its training data. CLIP's normalisation constants are different. Copying a CLIP snippet would silently shift every input. Your run: max |manual − processor| = 0.0078, which is exactly 2/255, i.e. one 8-bit brightness level after scaling to [−1, 1]. The worst pixel differs by one rounding step from resampling, so the pipelines are effectively identical.</p>
+  </aside>
+</section>
+
+<!-- 7 · Freezing -->
+<section class="slide">
+  <span class="crit">Criterion 3</span>
+  <div class="kicker">Intentional freezing</div>
+  <h2>Freeze the giant, train the head</h2>
+  <div class="arch">
+    <div class="blk io">Image<small>(B, 3, 224, 224)</small></div><div class="arrow">→</div>
+    <div class="blk frozen">❄ SigLIP vision encoder<small>ViT-B/16 · attention-pooled · frozen</small></div><div class="arrow">→</div>
+    <div class="blk io">pooler_output<small>(B, 768)</small></div><div class="arrow">→</div>
+    <div class="blk train">🔥 nn.Linear(768, 2)<small>trainable</small></div><div class="arrow">→</div>
+    <div class="blk io">logits<small>(B, 2)</small></div>
+  </div>
+  <div class="cols">
+    <pre>for param in model.vision_model.parameters():
+    param.requires_grad = False
+
+optimizer = AdamW(probe.head.parameters(),
+                  lr=1e-3, weight_decay=1e-4)</pre>
+    <table>
+      <tr><th>Parameters</th><th>Count</th></tr>
+      <tr><td>Frozen (vision encoder)</td><td class="num" data-r="params_frozen" data-fmt="int">≈ 93M</td></tr>
+      <tr><td>Trainable (head)</td><td class="num" data-r="params_trainable" data-fmt="int">1,538</td></tr>
+      <tr><td>Trainable share</td><td class="num" data-calc="share">&lt; 0.002%</td></tr>
+    </table>
+  </div>
+  <aside>
+    <p><b>Say:</b> "I set requires_grad to False on every vision-encoder parameter, so no gradients flow into it and the optimiser can't change it. The optimiser only receives the head's parameters. That's 92.9 million frozen versus 1,538 trainable, 0.0017% of the model, which is 768 times 2 weights plus 2 biases."</p>
+    <p class="why">Why freeze: 651 training images against ~93M parameters would overfit and could wreck the pre-trained features. Training is seconds instead of minutes, and a linear probe is the standard way to measure feature quality (CLIP and SigLIP papers both report it). Speed trick: because the backbone is frozen and there's no augmentation, each image's 768-d embedding never changes, so I compute embeddings once and train on the cache. I verified it's identical to the full forward pass (torch.allclose → True).</p>
+  </aside>
+</section>
+
+<!-- 8 · Zero-shot -->
+<section class="slide">
+  <span class="crit">Criterion 1</span>
+  <div class="kicker">Before</div>
+  <h2>Zero-shot baseline: text prompts, no training</h2>
+  <div class="cols">
+    <div>
+      <pre style="font-size:15px">Immature: "a photo of an unripe green tomato."
+          "a photo of an immature tomato."
+          "a photo of a green tomato."
+Mature:   "a photo of a ripe red tomato."
+          "a photo of a mature tomato."
+          "a photo of a red tomato."</pre>
+      <ul style="margin-top:14px">
+        <li style="font-size:18px">Prompts averaged per class (prompt ensembling)</li>
+        <li style="font-size:18px">Tokenised with <code>padding="max_length"</code>, as SigLIP was trained</li>
+      </ul>
+      <div class="stats">
+        <div class="stat"><span class="label">Val top-1</span><span class="big" data-r="zero_shot_val_acc" data-fmt="pct">—</span></div>
+        <div class="stat"><span class="label">Test top-1</span><span class="big" data-r="zero_shot_test_acc" data-fmt="pct">—</span></div>
+      </div>
+    </div>
+    <div class="fig"><img src="outputs/cm_zero_shot_val.png" alt="Zero-shot confusion matrix on validation"></div>
+  </div>
+  <aside>
+    <p><b>Say:</b> "Before any training, I describe each class in words, three prompts each, averaged. SigLIP compares each image with those text vectors. With zero labelled examples it gets 76.4% on validation and 78.6% on test. One SigLIP detail: text must be padded to max length, otherwise the scores are silently wrong."</p>
+    <p class="why">Reading the confusion matrix: rows are the true class, columns the predicted class, the diagonal is correct. Here the errors all go one way: zero-shot never calls an immature tomato mature, but it calls many mature tomatoes immature. My reading is that 'mature' in the expert labels includes tomatoes that aren't yet bright red, so a prompt saying 'ripe red tomato' puts the boundary in the wrong place.</p>
+  </aside>
+</section>
+
+<!-- 9 · Training curves -->
+<section class="slide">
+  <span class="crit">Criterion 4</span>
+  <div class="kicker">Training</div>
+  <h2>Training vs validation loss</h2>
+  <div class="fig" style="flex:1"><img src="outputs/training_curves.png" alt="Training and validation loss and accuracy curves"></div>
+  <p class="note">AdamW · lr 1e-3 · weight decay 1e-4 · batch 32 · 50 epochs · weights from the best epoch by validation loss (epoch <span data-r="best_epoch">—</span>) · test set untouched until the end</p>
+  <aside>
+    <p><b>Say:</b> "Left: cross-entropy loss per epoch. Train and validation fall together, ending at about 0.008 and 0.018. The lowest validation loss was at epoch 49 of 50, so there's no sign of overfitting; validation was still slowly improving. Validation accuracy is already about 98.6% after the first epoch, so the classes are linearly separable in SigLIP's features almost immediately. Right: accuracy, with the zero-shot level as a red dotted line for reference."</p>
+    <p class="why">How to read it: if validation loss rises while train loss keeps falling, that's overfitting, and that's why I select by validation. The test set is never used for any choice, so its score stays an unbiased estimate.</p>
+  </aside>
+</section>
+
+<!-- 10 · Results -->
+<section class="slide">
+  <span class="crit">Criterion 4</span>
+  <div class="kicker">After</div>
+  <h2>Zero-shot vs linear probe, held-out test set</h2>
+  <div class="stats">
+    <div class="stat"><span class="label">Zero-shot</span><span class="big" data-r="zero_shot_test_acc" data-fmt="pct">—</span></div>
+    <div class="stat"><span class="label">Linear probe</span><span class="big" style="color:var(--green)" data-r="linear_probe_test_acc" data-fmt="pct">—</span></div>
+    <div class="stat"><span class="label">Δ</span><span class="big" data-calc="delta">—</span></div>
+  </div>
+  <div class="cols">
+    <table>
+      <tr><th>Method</th><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th></tr>
+      <tr><td rowspan="2">Zero-shot</td><td>Immature</td><td class="num" data-r="zero_shot_report.Immature.precision" data-fmt="f3">—</td><td class="num" data-r="zero_shot_report.Immature.recall" data-fmt="f3">—</td><td class="num" data-r="zero_shot_report.Immature.f1-score" data-fmt="f3">—</td></tr>
+      <tr><td>Mature</td><td class="num" data-r="zero_shot_report.Mature.precision" data-fmt="f3">—</td><td class="num" data-r="zero_shot_report.Mature.recall" data-fmt="f3">—</td><td class="num" data-r="zero_shot_report.Mature.f1-score" data-fmt="f3">—</td></tr>
+      <tr><td rowspan="2">Linear probe</td><td>Immature</td><td class="num" data-r="linear_probe_report.Immature.precision" data-fmt="f3">—</td><td class="num" data-r="linear_probe_report.Immature.recall" data-fmt="f3">—</td><td class="num" data-r="linear_probe_report.Immature.f1-score" data-fmt="f3">—</td></tr>
+      <tr><td>Mature</td><td class="num" data-r="linear_probe_report.Mature.precision" data-fmt="f3">—</td><td class="num" data-r="linear_probe_report.Mature.recall" data-fmt="f3">—</td><td class="num" data-r="linear_probe_report.Mature.f1-score" data-fmt="f3">—</td></tr>
+    </table>
+    <div style="display:flex;gap:28px;justify-content:center;align-items:flex-start">
+      <div><div class="kicker" style="text-align:center">Zero-shot</div><div data-cm="cm_zero_shot_test"></div></div>
+      <div><div class="kicker" style="text-align:center">Linear probe</div><div data-cm="cm_linear_probe_test"></div></div>
+    </div>
+  </div>
+  <aside>
+    <p><b>Say:</b> "On the 140 held-out test images, zero-shot gets 78.6% and the frozen backbone plus linear probe gets 99.3%, plus 20.7 points from training 1,538 parameters. The confusion matrices show where: zero-shot misses 30 of 75 mature tomatoes (Mature recall 0.60), all called immature. The probe makes a single error, one immature tomato called mature."</p>
+    <p class="why">Precision for Mature = of everything called Mature, how much really was. Recall = of all truly Mature tomatoes, how many were found. Be honest about size: 140 test images, so one image ≈ 0.71 points, and 99.3% is literally one mistake from one seed. Read the zero-shot row like this: Immature recall 1.00 but precision 0.68, because everything uncertain gets dumped into Immature. Mature precision 1.00 but recall 0.60: when it says Mature it's right, but it misses 40% of them.</p>
+  </aside>
+</section>
+
+<!-- 11 · Error analysis -->
+<section class="slide">
+  <div class="kicker">Error analysis · borderline tomatoes</div>
+  <h2>Zero-shot misses turning tomatoes; the probe doesn't</h2>
+  <div style="display:flex;flex-direction:column;gap:12px;flex:1;min-height:0">
+    <div class="fig" style="flex:1"><img src="outputs/errors_zero_shot.png" alt="Zero-shot misclassified test images"></div>
+    <div class="fig" style="flex:1"><img src="outputs/errors_linear_probe.png" alt="Linear-probe misclassified test images"></div>
+  </div>
+  <aside>
+    <p><b>Say:</b> "Top row: images zero-shot got wrong; bottom row: the probe's mistakes. Every zero-shot miss is a tomato the expert labelled mature that is yellow, yellow-green, orange or only blushing red, not the deep red the prompt describes. The probe's single error is a pale yellow-green tomato labelled immature, a genuinely borderline case."</p>
+    <p class="why">Why zero-shot fails here: the prompts only say "green" or "red", while the expert labels are based on maturity, which isn't purely colour. The probe learns the actual decision boundary from labelled examples. The probe made 1 error; with 140 test images, don't claim it is "solved".</p>
+  </aside>
+</section>
+
+<!-- 12 · Takeaways -->
+<section class="slide">
+  <div class="kicker">Takeaways</div>
+  <h2>What this shows, and what it doesn't</h2>
+  <div class="cols">
+    <div>
+      <h3 style="font-size:20px;margin:0 0 8px">Findings</h3>
+      <ul>
+        <li>Zero-shot SigLIP: <b data-r="zero_shot_test_acc" data-fmt="pct">—</b> with no labels</li>
+        <li>1,538 trainable parameters → <b data-r="linear_probe_test_acc" data-fmt="pct">—</b> (<span data-calc="delta">—</span>)</li>
+        <li>Zero-shot errs one way: 30/75 Mature called Immature; the probe learns the expert's boundary (1 error / 140)</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="font-size:20px;margin:0 0 8px">Limits → next steps</h3>
+      <ul>
+        <li>Small, single-source dataset; single seed → repeat over seeds, report mean ± std</li>
+        <li>Binary labels only → finer ripeness stages (e.g. turning, pink) if labelled data exists</li>
+        <li>Backbone fully frozen → unfreeze the last 1–2 ViT blocks with a low learning rate</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">Code: notebook + README + requirements in the team repo · Questions?</p>
+  <aside>
+    <p><b>Say:</b> "The takeaway: SigLIP's frozen features are already good enough that a single linear layer goes from 78.6% to 99.3%. The information was already in the features; the text prompts just put the class boundary in the wrong place. The limits: one small dataset, one seed, two classes. Next I'd run multiple seeds and try unfreezing the last couple of transformer blocks."</p>
+    <p class="why">Naming your own limitations before the grader does is one of the strongest signals of research maturity.</p>
+  </aside>
+</section>
+
+</div>
+
+<div id="notes"><h4>Speaker notes · <span id="nslide"></span></h4><div id="nbody"></div></div>
+<div id="hud">← → navigate · N notes · P print/PDF</div>
+
+<script>
+(function () {
+  let R = {};
+  try { R = JSON.parse(document.getElementById('results').textContent || '{}'); } catch (e) { console.warn('results JSON invalid', e); }
+  const get = path => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), R);
+  const fmt = (v, f) => f === 'pct' ? (100 * v).toFixed(1) + '%' : f === 'f3' ? v.toFixed(3) : f === 'int' ? Math.round(v).toLocaleString('en-GB') : String(v);
+
+  document.querySelectorAll('[data-r]').forEach(el => {
+    const v = get(el.dataset.r);
+    if (v !== undefined) el.textContent = fmt(v, el.dataset.fmt);
+  });
+  if (R.zero_shot_test_acc !== undefined && R.linear_probe_test_acc !== undefined) {
+    const d = 100 * (R.linear_probe_test_acc - R.zero_shot_test_acc);
+    document.querySelectorAll('[data-calc="delta"]').forEach(el => el.textContent = (d >= 0 ? '+' : '') + d.toFixed(1) + ' pts');
+  }
+  if (R.params_frozen && R.params_trainable) {
+    const s = 100 * R.params_trainable / (R.params_frozen + R.params_trainable);
+    document.querySelectorAll('[data-calc="share"]').forEach(el => el.textContent = s.toFixed(4) + '%');
+  }
+  document.querySelectorAll('[data-cm]').forEach(el => {
+    const m = get(el.dataset.cm);
+    if (!m) { el.innerHTML = '<div class="missing">confusion matrix<br>appears after results are pasted</div>'; return; }
+    const max = Math.max(...m.flat()) || 1, names = ['Immature', 'Mature'];
+    let h = '<table class="cm"><tr><td></td><th colspan="2" class="axis">predicted →</th></tr><tr><td></td>' + names.map(n => `<th>${n}</th>`).join('') + '</tr>';
+    m.forEach((row, i) => {
+      h += `<tr><th>${names[i]}</th>` + row.map((v, j) => {
+        const a = 0.12 + 0.75 * v / max, col = i === j ? '47,107,58' : '166,49,31';
+        return `<td class="cell" style="background:rgba(${col},${a.toFixed(2)})">${v}</td>`;
+      }).join('') + '</tr>';
+    });
+    el.innerHTML = h + '</table>';
+  });
+  const missing = img => { img.outerHTML = `<div class="missing">${img.getAttribute('src')}<br>download outputs/ from Colab and place it next to slides.html</div>`; };
+  document.querySelectorAll('.fig img').forEach(img => {
+    if (img.complete && img.naturalWidth === 0) missing(img);
+    else img.addEventListener('error', () => missing(img));
+  });
+
+  const slides = [...document.querySelectorAll('.slide')], deck = document.getElementById('deck');
+  slides.forEach((s, i) => { const f = document.createElement('div'); f.className = 'footer'; f.textContent = `${i + 1} / ${slides.length}`; s.appendChild(f); });
+  let i = Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1);
+  const show = n => {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    const aside = slides[i].querySelector('aside');
+    document.getElementById('nbody').innerHTML = aside ? aside.innerHTML : '';
+    document.getElementById('nslide').textContent = `slide ${i + 1}`;
+    history.replaceState(null, '', '#' + (i + 1));
+  };
+  const fit = () => {
+    const notesH = document.body.classList.contains('show-notes') ? document.getElementById('notes').offsetHeight : 0;
+    const sc = Math.min(innerWidth / 1280, (innerHeight - notesH) / 720) * 0.96;
+    deck.style.transform = `translate(-50%, calc(-50% - ${notesH / 2}px)) scale(${sc})`;
+  };
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) show(i + 1);
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) show(i - 1);
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'n') { document.body.classList.toggle('show-notes'); fit(); }
+    else if (e.key.toLowerCase() === 'p') print();
+    else return;
+    e.preventDefault();
+  });
+  deck.addEventListener('click', e => show(i + (e.clientX > innerWidth / 2 ? 1 : -1)));
+  addEventListener('resize', fit);
+  show(i); fit();
+})();
+</script>
+</body>
+</html>
