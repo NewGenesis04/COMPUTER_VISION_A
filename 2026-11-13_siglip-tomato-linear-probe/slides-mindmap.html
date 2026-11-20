@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SigLIP Mind Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fffff8; --fg: #1d1d1b; --muted: #6b6b63; --rule: #e4e2d6; --panel: #f3f1e7; --stage: #2a2a27;
+  --accent: #a6311f; --good: #2f6b3a;
+  --context: #6b4fa0; --context-soft: #eee8f7;
+  --data: #2f62a3;    --data-soft: #e3ecf7;
+  --method: #2f7a4a;  --method-soft: #e2f1e7;
+  --results: #b5551d; --results-soft: #f9e9dc;
+  --core: #1d1d1b;    --core-soft: #fffff8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1b19; --fg: #ecebe3; --muted: #a3a197; --rule: #3a3934; --panel: #262521; --stage: #0e0e0d;
+    --accent: #e8836f; --good: #8fd19a;
+    --context: #b8a3e6; --context-soft: #2a2338;
+    --data: #8db4e2;    --data-soft: #1d2836;
+    --method: #8fd19a;  --method-soft: #1d3024;
+    --results: #f0a574; --results-soft: #382618;
+    --core: #ecebe3;    --core-soft: #1b1b19;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1b19; --fg: #ecebe3; --muted: #a3a197; --rule: #3a3934; --panel: #262521; --stage: #0e0e0d;
+  --accent: #e8836f; --good: #8fd19a;
+  --context: #b8a3e6; --context-soft: #2a2338;
+  --data: #8db4e2;    --data-soft: #1d2836;
+  --method: #8fd19a;  --method-soft: #1d3024;
+  --results: #f0a574; --results-soft: #382618;
+  --core: #ecebe3;    --core-soft: #1b1b19;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--stage); }
+body { font-family: 'Inter', system-ui, sans-serif; color: var(--fg); overflow: hidden; }
+#deck { position: absolute; top: 50%; left: 50%; width: 1280px; height: 720px; transform-origin: center; }
+.slide { position: absolute; inset: 0; background: var(--bg); padding: 44px 64px 40px; display: none; flex-direction: column; }
+.slide.active { display: flex; }
+.slide.branch { border-top: 10px solid var(--c); }
+h1 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 400; font-size: 40px; line-height: 1.15; margin: 0; }
+h2 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 400; font-size: 34px; margin: 0 0 14px; max-width: 880px; line-height: 1.15; }
+.kicker { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: var(--c, var(--accent)); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.kicker::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--accent)); }
+p, li { font-size: 19px; line-height: 1.45; }
+ul { margin: 0; padding-left: 22px; } li { margin: 5px 0; }
+code, pre { font-family: 'JetBrains Mono', monospace; }
+code { font-size: .85em; background: var(--panel); padding: 1px 6px; border-radius: 4px; }
+pre { background: var(--panel); padding: 14px 18px; border-radius: 6px; font-size: 15px; line-height: 1.5; margin: 0; }
+.c { color: var(--muted); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; flex: 1; min-height: 0; align-items: start; }
+.cols.wl { grid-template-columns: 1.25fr 1fr; }
+.fig { min-height: 0; display: flex; align-items: center; justify-content: center; align-self: stretch; }
+.fig img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; background: #fff; }
+.missing { border: 2px dashed var(--rule); color: var(--muted); font-size: 14px; padding: 20px; text-align: center; border-radius: 6px; width: 100%; }
+.callout { background: var(--panel); border-left: 4px solid var(--c, var(--accent)); padding: 12px 16px; border-radius: 4px; font-size: 17px; line-height: 1.45; margin-top: 14px; }
+table { border-collapse: collapse; font-size: 17px; width: 100%; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); }
+th { font-weight: 600; color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+td.num { font-family: 'JetBrains Mono', monospace; font-size: 15px; }
+.stats { display: flex; gap: 44px; margin: 4px 0 14px; }
+.stat { display: flex; flex-direction: column; }
+.stat .label { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.stat .big { font-family: 'Source Serif 4', serif; font-size: 56px; line-height: 1; }
+.flow { display: flex; align-items: center; gap: 10px; margin: 6px 0 18px; font-size: 15px; }
+.flow .b { border-radius: 6px; padding: 10px 12px; text-align: center; background: var(--panel); line-height: 1.3; }
+.flow .b small { display: block; font-size: 12px; color: var(--muted); }
+.flow .b.frozen { border: 2px solid var(--data); background: var(--data-soft); }
+.flow .b.train { border: 2px solid var(--method); background: var(--method-soft); }
+.flow .arrow { color: var(--muted); }
+
+/* mini-map + connections strip */
+.minimap { position: absolute; top: 18px; right: 22px; width: 230px; height: 129px; cursor: pointer; opacity: .95; }
+.links { margin-top: auto; padding-top: 12px; border-top: 1px dashed var(--rule); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; font-size: 14px; }
+.links .lbl { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+.chip { border: 1.5px solid var(--cc); border-radius: 99px; padding: 4px 12px; cursor: pointer; background: var(--bg); }
+.chip b { color: var(--cc); font-weight: 600; }
+
+/* map svg */
+svg.map text { font-family: 'Inter', sans-serif; fill: var(--fg); }
+svg.map .node rect { stroke-width: 2.5; }
+svg.map .node { cursor: pointer; }
+svg.map .node:hover rect { stroke-width: 4; }
+svg.map .g-context rect { fill: var(--context-soft); stroke: var(--context); }
+svg.map .g-data rect    { fill: var(--data-soft); stroke: var(--data); }
+svg.map .g-method rect  { fill: var(--method-soft); stroke: var(--method); }
+svg.map .g-results rect { fill: var(--results-soft); stroke: var(--results); }
+svg.map .core rect { fill: var(--core-soft); stroke: var(--core); stroke-width: 3; }
+svg.map .spoke { stroke: var(--rule); stroke-width: 2.5; }
+svg.map .xlink { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 7 6; }
+svg.map .badge circle { fill: var(--accent); }
+svg.map .badge text { fill: var(--bg); font-weight: 600; font-size: 15px; }
+svg.map.mini .node rect { stroke-width: 6; }
+svg.map.mini .dim { opacity: .28; }
+svg.map.mini .spoke { stroke-width: 6; }
+.legend { list-style: none; padding: 0 6px 0 0; margin: 0; min-height: 0; max-height: 100%; overflow-y: auto; }
+.legend li { font-size: 14px; line-height: 1.35; margin: 0 0 9px; display: flex; gap: 10px; }
+.legend .n { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--bg); font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+.keyrow { display: flex; gap: 18px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.keyrow span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; background: var(--k); vertical-align: -1px; }
+
+/* confusion matrix (rendered from results) */
+.cm { border-collapse: separate; border-spacing: 4px; width: auto; }
+.cm td, .cm th { border: none; text-align: center; padding: 0; }
+.cm td.cell { width: 74px; height: 52px; font-family: 'JetBrains Mono', monospace; font-size: 20px; border-radius: 6px; }
+.cm th { font-size: 11px; padding: 3px; }
+.cmwrap { display: flex; gap: 22px; }
+.cmwrap .t { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; text-align: center; color: var(--muted); }
+
+.footer { position: absolute; bottom: 14px; right: 24px; font-size: 12px; color: var(--muted); }
+#notes { position: fixed; left: 0; right: 0; bottom: 0; max-height: 36vh; overflow: auto; background: var(--bg); color: var(--fg); border-top: 2px solid var(--accent); padding: 12px 22px 16px; font-family: 'Source Serif 4', serif; font-size: 17px; line-height: 1.5; display: none; z-index: 5; }
+body.show-notes #notes { display: block; }
+.slide aside { display: none; }
+#hud { position: fixed; bottom: 10px; left: 12px; font-size: 12px; color: #999; z-index: 6; }
+body.show-notes #hud { display: none; }
+@media print {
+  @page { size: 1280px 720px; margin: 0; }
+  html, body { overflow: visible; height: auto; background: none; }
+  #deck { position: static; transform: none !important; width: 1280px; height: auto; }
+  .slide { display: flex !important; position: relative; width: 1280px; height: 720px; break-after: page; }
+  #notes, #hud { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<script id="results" type="application/json">
+{"model": "google/siglip-base-patch16-224", "classes": ["Immature", "Mature"], "n_train": 651, "n_val": 140, "n_test": 140, "params_frozen": 92884224, "params_trainable": 1538, "zero_shot_val_acc": 0.7642857142857142, "zero_shot_test_acc": 0.7857142857142857, "linear_probe_test_acc": 0.9928571428571429, "zero_shot_report": {"Immature": {"precision": 0.6842105263157895, "recall": 1.0, "f1-score": 0.8125, "support": 65.0}, "Mature": {"precision": 1.0, "recall": 0.6, "f1-score": 0.75, "support": 75.0}, "accuracy": 0.7857142857142857, "macro avg": {"precision": 0.8421052631578947, "recall": 0.8, "f1-score": 0.78125, "support": 140.0}, "weighted avg": {"precision": 0.8533834586466166, "recall": 0.7857142857142857, "f1-score": 0.7790178571428571, "support": 140.0}}, "linear_probe_report": {"Immature": {"precision": 1.0, "recall": 0.9846153846153847, "f1-score": 0.9922480620155039, "support": 65.0}, "Mature": {"precision": 0.9868421052631579, "recall": 1.0, "f1-score": 0.9933774834437086, "support": 75.0}, "accuracy": 0.9928571428571429, "macro avg": {"precision": 0.993421052631579, "recall": 0.9923076923076923, "f1-score": 0.9928127727296062, "support": 140.0}, "weighted avg": {"precision": 0.9929511278195488, "recall": 0.9928571428571429, "f1-score": 0.9928531092091849, "support": 140.0}}, "cm_zero_shot_test": [[65, 0], [30, 45]], "cm_linear_probe_test": [[64, 1], [0, 75]], "final_train_loss": 0.008409349247813225, "final_val_loss": 0.01843632385134697, "best_epoch": 49, "epochs": 50, "lr": 0.001, "batch_size": 32, "seed": 42}
+</script>
+
+<div id="deck">
+
+<!-- HUB -->
+<section class="slide" data-id="hub">
+  <div class="kicker">Computer Vision A · MLC Africa × Harvard CS197</div>
+  <h1>Teaching SigLIP to tell a ripe tomato from an unripe one</h1>
+  <svg class="map" data-map="hub" viewBox="0 0 1000 560" style="flex:1;min-height:0;width:100%;margin-top:6px"></svg>
+  <div class="keyrow"><span style="--k:var(--context)">why it matters</span><span style="--k:var(--data)">the data</span><span style="--k:var(--method)">how we did it</span><span style="--k:var(--results)">what we found</span><span style="--k:transparent">· click any branch to jump there</span></div>
+  <aside><p><b>Say:</b> "Everything in this project hangs off one question in the middle: can a sentence sort tomatoes, or do we need examples? The branches around it are the problem, the data, how we used the model, and what we found. At the end I'll show how they tie together."</p></aside>
+</section>
+
+<!-- 1 Problem -->
+<section class="slide branch" data-id="problem">
+  <div class="kicker">Problem</div>
+  <h2>Why should a computer judge ripeness at all?</h2>
+  <div class="cols">
+    <ul>
+      <li>Farmers still decide when to pick a tomato by looking at its colour.</li>
+      <li>Pick too early or too late and you lose money, and a harvesting robot has to get it right on its own.</li>
+      <li>Checking fruit by hand is slow, tiring work.</li>
+      <li>And expert labels don't come cheap.</li>
+    </ul>
+    <div>
+      <p style="margin:22px 0 6px;font-weight:600">Where it would help</p>
+      <ul>
+        <li>Harvesting robots that only pick ripe fruit</li>
+        <li>Packing lines that sort tomatoes by ripeness</li>
+        <li>Quality checks as the fruit moves to market</li>
+      </ul>
+      <div class="callout">So the real question is: how far can we get with <b>no labels at all</b>, and how much do <b>a few labels</b> add?</div>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--muted)">Source: Data in Brief (2023), PMC10618421</p>
+  <aside><p><b>Say:</b> "Ripeness is still judged by eye, mistakes cost money, and getting experts to label photos is expensive. That's what shaped our question: what can we do with no labels, and what do a few labels buy us?"</p></aside>
+</section>
+
+<!-- Research direction -->
+<section class="slide branch core-slide" data-id="direction">
+  <div class="kicker">Research direction</div>
+  <h2>One model, two ways of using it, compared fairly</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li><b>Before:</b> we describe each class in a sentence and let SigLIP pick the closest one. No training, no labels.</li>
+        <li><b>After:</b> we keep SigLIP frozen and train one small layer on 651 labelled photos.</li>
+        <li>Same model, same photos, same test set, so any gap comes down to <b>where the line between the classes gets drawn</b>.</li>
+      </ul>
+      <div class="callout">Our bet: SigLIP already "knows" what ripeness looks like. It just needs to be shown where the line is.</div>
+    </div>
+    <div>
+      <p style="margin:0 0 6px;font-weight:600">Where it could go next</p>
+      <ul>
+        <li>Prompts that describe turning tomatoes, not just red ones</li>
+        <li>Letting SigLIP's last couple of layers learn too</li>
+        <li>Repeating with several random seeds to see how stable the numbers are</li>
+      </ul>
+    </div>
+  </div>
+  <aside><p><b>Say:</b> "The research question is a comparison. Zero-shot is SigLIP using only words. The linear probe is SigLIP plus one tiny trained layer. Because everything else is held fixed, the difference between them tells us how much labelled examples add."</p></aside>
+</section>
+
+<!-- 2 Data -->
+<section class="slide branch" data-id="data">
+  <div class="kicker">Data</div>
+  <h2>Making sure the test is actually fair</h2>
+  <div class="cols wl">
+    <div class="fig"><img src="outputs/samples.png" alt="Sample immature and mature tomatoes"></div>
+    <ul>
+      <li>Two classes: <b>Immature</b> and <b>Mature</b>.</li>
+      <li>The dataset also ships rotated and flipped copies of each photo. We left those out, or the test would contain pictures the model had effectively already seen.</li>
+      <li>Some photos were exact duplicates, so we removed them too, leaving <b>931</b>.</li>
+      <li><b data-r="n_train">651</b> to learn from, <b data-r="n_val">140</b> to check progress against, and <b data-r="n_test">140</b> kept hidden until the very end.</li>
+      <li>Every group keeps the same mix: roughly 46% immature, 54% mature.</li>
+    </ul>
+  </div>
+  <aside><p><b>Say:</b> "The main thing here is fairness. Augmented copies would leak test photos into training, so we used the originals only, removed duplicates, and split them so each group has the same balance."</p></aside>
+</section>
+
+<!-- 3 Preprocessing -->
+<section class="slide branch" data-id="prep">
+  <div class="kicker">Preprocessing</div>
+  <h2>Making each photo look the way SigLIP expects</h2>
+  <div class="cols">
+    <div>
+      <pre>img.resize((224, 224), BICUBIC)   <span class="c"># shrink to 224×224</span>
+x = x / 255.0                      <span class="c"># 0–255 becomes 0–1</span>
+x = (x - 0.5) / 0.5                <span class="c"># now −1 to 1, SigLIP's range</span>
+x = x.permute(2, 0, 1)             <span class="c"># colour channels first</span>
+<span class="c"># stack into batches: B×3×224×224</span></pre>
+      <div class="callout">We did this by hand and compared it with the official tool. The biggest difference anywhere was <b>0.0078</b>, a single shade of brightness, so the two are effectively identical.</div>
+    </div>
+    <div class="fig"><img src="outputs/patch_grid.png" alt="224 by 224 image with 14 by 14 patch grid"></div>
+  </div>
+  <aside><p><b>Say:</b> "SigLIP was trained on 224-pixel images cut into 16-pixel squares, a 14 by 14 grid. We resize to match, scale the values to between minus one and one as SigLIP was trained, and put the colour channels first because that's what PyTorch expects."</p></aside>
+</section>
+
+<!-- 4 Model -->
+<section class="slide branch" data-id="model">
+  <div class="kicker">The model</div>
+  <h2>A model that understands pictures and words together</h2>
+  <div class="cols">
+    <ul>
+      <li>SigLIP has two halves: one reads images, the other reads text. Both turn what they see into 768 numbers.</li>
+      <li>A photo and a caption that match end up close together, which is why it can classify from a sentence.</li>
+      <li>Unlike CLIP, it learned by asking "do these two match?" one pair at a time, instead of picking the best caption out of a crowd.</li>
+      <li>Each photo gets boiled down to a single 768-number fingerprint, its <code>pooler_output</code>.</li>
+    </ul>
+    <div>
+      <pre>score = cos(image, text)   <span class="c"># how alike are they?</span>
+        × scale            <span class="c"># sharpen the difference</span>
+        + bias             <span class="c"># lean towards "no match"</span></pre>
+      <div class="callout">The scale and bias are the same for both classes, so they never change which class wins.</div>
+    </div>
+  </div>
+  <aside><p><b>Say:</b> "SigLIP is from Google, 2023. Pictures and words live in the same space, which is the whole reason zero-shot works. Its twist on CLIP is judging each image–caption pair on its own, as a yes or no."</p></aside>
+</section>
+
+<!-- 5 Freezing -->
+<section class="slide branch" data-id="freeze">
+  <div class="kicker">Freezing</div>
+  <h2>Why we left SigLIP untouched</h2>
+  <div class="flow">
+    <div class="b">photo<small>B×3×224×224</small></div><span class="arrow">→</span>
+    <div class="b frozen">❄ SigLIP's image half<small>frozen, never changes</small></div><span class="arrow">→</span>
+    <div class="b">fingerprint<small>768 numbers</small></div><span class="arrow">→</span>
+    <div class="b train">🔥 nn.Linear(768, 2)<small>the only part we train</small></div><span class="arrow">→</span>
+    <div class="b">immature or mature?</div>
+  </div>
+  <div class="cols" style="flex:none">
+    <pre>for p in model.vision_model.parameters():
+    p.requires_grad = False</pre>
+    <table>
+      <tr><td>Left frozen</td><td class="num" data-r="params_frozen" data-fmt="int">92,884,224</td></tr>
+      <tr><td>Trained (768×2 + 2)</td><td class="num" data-r="params_trainable" data-fmt="int">1,538</td></tr>
+      <tr><td>Share we trained</td><td class="num">0.0017%</td></tr>
+    </table>
+  </div>
+  <div class="callout">With only 651 photos, retraining 92.9 million weights would just memorise them. And since a frozen SigLIP gives the same fingerprint for a photo every time, we worked each one out once and trained on those. We checked: it's exactly the same as running the full model.</div>
+  <aside><p><b>Say:</b> "SigLIP never had a classification layer, so we added one small one on top and froze everything else. That's 1,538 numbers to learn instead of 93 million."</p></aside>
+</section>
+
+<!-- 6 Zero-shot -->
+<section class="slide branch" data-id="zs">
+  <div class="kicker">Before: words only</div>
+  <h2>What can SigLIP do with just a sentence?</h2>
+  <div class="cols">
+    <div>
+      <pre style="font-size:14px">Immature: "an unripe green tomato" · "an immature tomato" · "a green tomato"
+Mature:   "a ripe red tomato" · "a mature tomato" · "a red tomato"</pre>
+      <p style="font-size:16px;margin:8px 0">Three ways of saying each class, averaged, so no single wording decides the result.</p>
+      <div class="stats">
+        <div class="stat"><span class="label">Checking set</span><span class="big" data-r="zero_shot_val_acc" data-fmt="pct">76.4%</span></div>
+        <div class="stat"><span class="label">Hidden test</span><span class="big" data-r="zero_shot_test_acc" data-fmt="pct">78.6%</span></div>
+      </div>
+      <div class="callout">In a sense, the sentences <i>are</i> the classifier. Their two vectors do exactly the job a trained layer would.</div>
+    </div>
+    <div class="fig"><img src="outputs/cm_zero_shot_val.png" alt="Zero-shot confusion matrix, validation"></div>
+  </div>
+  <aside><p><b>Say:</b> "Before any training, we just describe each class in words and let SigLIP pick the closest. With zero labels it gets 78.6% on the hidden test set. Not bad, but look where the mistakes land."</p></aside>
+</section>
+
+<!-- 7 Training -->
+<section class="slide branch" data-id="train">
+  <div class="kicker">Training</div>
+  <h2>Teaching the small layer, one batch at a time</h2>
+  <div class="fig" style="flex:1"><img src="outputs/training_curves.png" alt="Training and validation loss and accuracy curves"></div>
+  <p style="font-size:16px;margin:10px 0 0">We showed the layer all 651 photos 50 times over, 32 at a time, nudging its weights after every batch: about 1,050 small steps. The checking set liked epoch <b data-r="best_epoch">49</b> best, and it was already right about 98.6% of the time after the first pass, so SigLIP's fingerprints separate the two classes almost straight away.</p>
+  <aside><p><b>Say:</b> "Both loss curves fall together and flatten out, and the best epoch is near the end, so it isn't overfitting. The striking part is how quickly it gets there."</p></aside>
+</section>
+
+<!-- 8 Probe -->
+<section class="slide branch" data-id="probe">
+  <div class="kicker">After: learning from examples</div>
+  <h2>Same fingerprints, but now the line is drawn from examples</h2>
+  <div class="stats">
+    <div class="stat"><span class="label">Words only</span><span class="big" data-r="zero_shot_test_acc" data-fmt="pct">78.6%</span></div>
+    <div class="stat"><span class="label">With examples</span><span class="big" style="color:var(--good)" data-r="linear_probe_test_acc" data-fmt="pct">99.3%</span></div>
+    <div class="stat"><span class="label">Gain</span><span class="big" data-calc="delta">+20.7 pts</span></div>
+  </div>
+  <div class="cols">
+    <table>
+      <tr><th></th><th>Class</th><th>Prec.</th><th>Recall</th></tr>
+      <tr><td rowspan="2">Words only</td><td>Immature</td><td class="num" data-r="zero_shot_report.Immature.precision" data-fmt="f3"></td><td class="num" data-r="zero_shot_report.Immature.recall" data-fmt="f3"></td></tr>
+      <tr><td>Mature</td><td class="num" data-r="zero_shot_report.Mature.precision" data-fmt="f3"></td><td class="num" data-r="zero_shot_report.Mature.recall" data-fmt="f3"></td></tr>
+      <tr><td rowspan="2">Examples</td><td>Immature</td><td class="num" data-r="linear_probe_report.Immature.precision" data-fmt="f3"></td><td class="num" data-r="linear_probe_report.Immature.recall" data-fmt="f3"></td></tr>
+      <tr><td>Mature</td><td class="num" data-r="linear_probe_report.Mature.precision" data-fmt="f3"></td><td class="num" data-r="linear_probe_report.Mature.recall" data-fmt="f3"></td></tr>
+    </table>
+    <div class="cmwrap">
+      <div><div class="t">Words only</div><div data-cm="cm_zero_shot_test"></div></div>
+      <div><div class="t">Examples</div><div data-cm="cm_linear_probe_test"></div></div>
+    </div>
+  </div>
+  <aside><p><b>Say:</b> "On the 140 hidden photos, words alone get 78.6%. Add a 1,538-number layer trained on examples and it's 99.3%. Words missed 30 of the 75 mature tomatoes; the trained layer misses one photo in total."</p></aside>
+</section>
+
+<!-- 9 Errors & limits -->
+<section class="slide branch" data-id="errors">
+  <div class="kicker">Mistakes &amp; limits</div>
+  <h2>The tomatoes that words got wrong</h2>
+  <div class="fig" style="height:150px;flex:none"><img src="outputs/errors_zero_shot.png" alt="Zero-shot mistakes"></div>
+  <div class="cols wl" style="margin-top:12px">
+    <div>
+      <div class="callout" style="margin-top:0">Every one of zero-shot's 30 mistakes was a mature tomato it called immature. Look at them: yellow, orange, just starting to blush. Our prompt said "red", but the expert's idea of mature starts much earlier.</div>
+      <ul style="margin-top:10px">
+        <li style="font-size:16px">With 140 test photos, one photo is worth about 0.7 points, and we ran a single seed, so we don't read much into 99.3% versus 100%.</li>
+        <li style="font-size:16px">The trained layer's only miss (right) is a pale tomato the expert called immature, a genuinely borderline case.</li>
+      </ul>
+    </div>
+    <div class="fig" style="height:190px"><img src="outputs/errors_linear_probe.png" alt="Linear probe single mistake"></div>
+  </div>
+  <aside><p><b>Say:</b> "SigLIP wasn't wrong about colour. Our words just drew the line at 'red', while the expert draws it earlier. Examples taught the layer where the expert's line actually is."</p></aside>
+</section>
+
+<!-- CONNECTIONS -->
+<section class="slide" data-id="connections">
+  <div class="kicker">Putting it together</div>
+  <h1 style="font-size:34px">How it all hangs together</h1>
+  <div style="display:grid;grid-template-columns:1fr 400px;grid-template-rows:minmax(0,1fr);gap:18px;flex:1;min-height:0;margin-top:4px;margin-bottom:18px">
+    <svg class="map" data-map="connections" viewBox="0 0 1000 560" style="width:100%;height:100%"></svg>
+    <ol class="legend" id="legend"></ol>
+  </div>
+  <aside><p><b>Say:</b> "If you remember one thing, make it link 1. Words-only and the trained layer are the same kind of classifier looking at the same fingerprints. One learned what 'mature' means from a sentence, the other from examples, and that's the whole 20-point gap."</p></aside>
+</section>
+
+</div>
+
+<div id="notes"><div id="nbody"></div></div>
+<div id="hud">← → navigate · H hub · N notes · P print</div>
+
+<script>
+(function () {
+  let R = {};
+  try { R = JSON.parse(document.getElementById('results').textContent); } catch (e) {}
+  const get = p => p.split('.').reduce((o, k) => (o == null ? undefined : o[k]), R);
+  const fmt = (v, f) => f === 'pct' ? (100 * v).toFixed(1) + '%' : f === 'f3' ? v.toFixed(3) : f === 'int' ? Math.round(v).toLocaleString('en-GB') : String(v);
+  document.querySelectorAll('[data-r]').forEach(el => { const v = get(el.dataset.r); if (v !== undefined) el.textContent = fmt(v, el.dataset.fmt); });
+  if (R.zero_shot_test_acc !== undefined) {
+    const d = 100 * (R.linear_probe_test_acc - R.zero_shot_test_acc);
+    document.querySelectorAll('[data-calc="delta"]').forEach(el => el.textContent = (d >= 0 ? '+' : '') + d.toFixed(1) + ' pts');
+  }
+  document.querySelectorAll('[data-cm]').forEach(el => {
+    const m = get(el.dataset.cm); if (!m) return;
+    const max = Math.max(...m.flat()) || 1, names = ['Imm.', 'Mat.'];
+    let h = '<table class="cm"><tr><td></td>' + names.map(n => `<th>${n}</th>`).join('') + '</tr>';
+    m.forEach((row, i) => { h += `<tr><th>${names[i]}</th>` + row.map((v, j) => `<td class="cell" style="background:rgba(${i === j ? '47,107,58' : '166,49,31'},${(0.12 + 0.75 * v / max).toFixed(2)})">${v}</td>`).join('') + '</tr>'; });
+    el.innerHTML = h + '</table>';
+  });
+  const missing = img => { img.outerHTML = `<div class="missing">${img.getAttribute('src')} not found</div>`; };
+  document.querySelectorAll('.fig img').forEach(img => { if (img.complete && img.naturalWidth === 0) missing(img); else img.addEventListener('error', () => missing(img)); });
+
+  /* ---------- the map ---------- */
+  const NODES = [
+    { id: 'problem', label: 'Problem',         sub: 'ripeness judged by eye',  g: 'context' },
+    { id: 'data',    label: 'Data',            sub: '931 photos, no copies',   g: 'data' },
+    { id: 'train',   label: 'Training',        sub: 'best after 49 laps',      g: 'method' },
+    { id: 'freeze',  label: 'Freezing',        sub: 'train 1,538 of 92.9M',    g: 'method' },
+    { id: 'model',   label: 'SigLIP',          sub: 'sees pictures and words', g: 'method' },
+    { id: 'prep',    label: 'Preprocessing',   sub: 'photos it recognises',    g: 'data' },
+    { id: 'errors',  label: 'Mistakes',        sub: 'words missed the orange', g: 'results' },
+    { id: 'probe',   label: 'With examples',   sub: '99.3% on hidden photos',  g: 'results' },
+    { id: 'zs',      label: 'Words only',      sub: '78.6%, zero labels',      g: 'results' },
+  ];
+  const LINKS = [
+    ['zs', 'probe',   'They\u2019re the same kind of classifier. One learned what \u201cmature\u201d means from words, the other from examples, and that difference is the whole 20-point gap.'],
+    ['zs', 'errors',  'Our prompt said \u201cred\u201d. The yellow and orange tomatoes the expert called mature slipped straight past it.'],
+    ['freeze', 'train', 'We only had to look at each photo once. A frozen model gives the same answer every time, so we saved its output and trained on that.'],
+    ['prep', 'model', 'We sized photos the way SigLIP expects. 224 pixels gives its 16-pixel squares a neat 14\u00d714 grid, and the scaling matches how it was trained.'],
+    ['data', 'train', 'The checking set decided when to stop. It picked epoch 49, and the test set stayed hidden until the very end.'],
+    ['problem', 'zs', 'Labels are expensive, so start with none. That\u2019s why the first thing we asked is what words alone can do.'],
+  ];
+  const CX = 500, CY = 288, RX = 385, RY = 215, W = 176, H = 60;
+  NODES.forEach((n, k) => {
+    const a = -Math.PI / 2 + k * 2 * Math.PI / NODES.length;
+    n.x = CX + RX * Math.cos(a); n.y = CY + RY * Math.sin(a);
+  });
+  const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+  function draw(svg, { active = null, links = false, mini = false } = {}) {
+    let h = '';
+    NODES.forEach(n => { h += `<line class="spoke ${mini && active && n.id !== active ? 'dim' : ''}" x1="${CX}" y1="${CY}" x2="${n.x}" y2="${n.y}"/>`; });
+    if (links) LINKS.forEach(([a, b], i) => {
+      const A = byId[a], B = byId[b], mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+      const qx = mx + (CX - mx) * 0.45, qy = my + (CY - my) * 0.45;
+      const d = Math.hypot(A.x - B.x, A.y - B.y), t = d > 500 ? 0.27 : 0.5;
+      const bx = (1 - t) ** 2 * A.x + 2 * (1 - t) * t * qx + t * t * B.x, by = (1 - t) ** 2 * A.y + 2 * (1 - t) * t * qy + t * t * B.y;
+      h += `<path class="xlink" d="M${A.x},${A.y} Q${qx},${qy} ${B.x},${B.y}"/>`;
+      h += `<g class="badge"><circle cx="${bx}" cy="${by}" r="15"/><text x="${bx}" y="${by + 5}" text-anchor="middle">${i + 1}</text></g>`;
+    });
+    const cw = links ? 270 : 330, ch = links ? 74 : 96;
+    h += `<g class="core node" data-go="${mini ? 'hub' : 'direction'}"><rect x="${CX - cw / 2}" y="${CY - ch / 2}" width="${cw}" height="${ch}" rx="14"/>`;
+    if (!mini) h += `<text x="${CX}" y="${CY - (links ? 8 : 14)}" text-anchor="middle" font-size="${links ? 16 : 19}" font-weight="600">Can a sentence sort tomatoes,</text><text x="${CX}" y="${CY + (links ? 14 : 12)}" text-anchor="middle" font-size="${links ? 16 : 19}" font-weight="600">or do we need examples?</text>${links ? '' : `<text x="${CX}" y="${CY + 37}" text-anchor="middle" font-size="14" style="fill:var(--muted)">words 78.6% · examples 99.3%</text>`}`;
+    h += '</g>';
+    NODES.forEach(n => {
+      const dim = mini && active && n.id !== active;
+      h += `<g class="node g-${n.g} ${dim ? 'dim' : ''}" data-go="${n.id}"><rect x="${n.x - W / 2}" y="${n.y - H / 2}" width="${W}" height="${H}" rx="12"/>`;
+      if (!mini) h += `<text x="${n.x}" y="${n.y - 4}" text-anchor="middle" font-size="17" font-weight="600">${esc(n.label)}</text><text x="${n.x}" y="${n.y + 17}" text-anchor="middle" font-size="13" style="fill:var(--muted)">${esc(n.sub)}</text>`;
+      h += '</g>';
+    });
+    svg.innerHTML = h;
+  }
+
+  const slides = [...document.querySelectorAll('.slide')], deck = document.getElementById('deck');
+  const indexOf = id => slides.findIndex(s => s.dataset.id === id);
+
+  draw(document.querySelector('[data-map="hub"]'));
+  draw(document.querySelector('[data-map="connections"]'), { links: true });
+  document.getElementById('legend').innerHTML = LINKS.map(([a, b, t], i) =>
+    `<li><span class="n">${i + 1}</span><span><b>${byId[a].label} ↔ ${byId[b].label}</b><br>${t}</span></li>`).join('');
+
+  slides.filter(s => s.classList.contains('branch')).forEach(s => {
+    const n = byId[s.dataset.id] || { id: '__core', g: null };
+    s.style.setProperty('--c', n.g ? `var(--${n.g})` : 'var(--accent)');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 1000 560'); svg.setAttribute('class', 'map mini minimap');
+    svg.dataset.go = 'hub';
+    draw(svg, { active: n.id, mini: true });
+    s.appendChild(svg);
+    const rel = LINKS.filter(([a, b]) => a === n.id || b === n.id);
+    if (rel.length) {
+      const strip = document.createElement('div'); strip.className = 'links';
+      strip.innerHTML = '<span class="lbl">Links to</span>' + rel.map(([a, b, t]) => {
+        const o = byId[a === n.id ? b : a];
+        return `<span class="chip" style="--cc:var(--${o.g})" data-go="${o.id}" title="${esc(t)}"><b>${esc(o.label)}</b> · ${esc(t.split(/[;.]/)[0])}</span>`;
+      }).join('');
+      s.appendChild(strip);
+    }
+  });
+  slides.forEach((s, i) => { const f = document.createElement('div'); f.className = 'footer'; f.textContent = `${i + 1} / ${slides.length}`; s.appendChild(f); });
+
+  let i = Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1);
+  const show = n => {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    const aside = slides[i].querySelector('aside');
+    document.getElementById('nbody').innerHTML = aside ? aside.innerHTML : '';
+    history.replaceState(null, '', '#' + (i + 1));
+    if (slides[i].dataset.id === 'connections') fitLegend();
+  };
+  // Shrink the legend text until it fits its column; the column scrolls if it still can't.
+  function fitLegend() {
+    const ol = document.getElementById('legend');
+    let size = 14;
+    ol.querySelectorAll('li').forEach(li => li.style.fontSize = size + 'px');
+    while (ol.scrollHeight > ol.clientHeight + 1 && size > 11) {
+      size -= 0.5;
+      ol.querySelectorAll('li').forEach(li => li.style.fontSize = size + 'px');
+    }
+  }
+  document.fonts && document.fonts.ready.then(() => { if (slides[i].dataset.id === 'connections') fitLegend(); });
+  const fit = () => {
+    const nh = document.body.classList.contains('show-notes') ? document.getElementById('notes').offsetHeight : 0;
+    const sc = Math.min(innerWidth / 1280, (innerHeight - nh) / 720) * 0.96;
+    deck.style.transform = `translate(-50%, calc(-50% - ${nh / 2}px)) scale(${sc})`;
+  };
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) show(i + 1);
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) show(i - 1);
+    else if (e.key.toLowerCase() === 'h' || e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'n') { document.body.classList.toggle('show-notes'); fit(); }
+    else if (e.key.toLowerCase() === 'p') print();
+    else return;
+    e.preventDefault();
+  });
+  deck.addEventListener('click', e => {
+    const go = e.target.closest('[data-go]');
+    if (go) { const k = indexOf(go.dataset.go); show(k >= 0 ? k : 0); return; }
+    show(i + (e.clientX > innerWidth / 2 ? 1 : -1));
+  });
+  addEventListener('resize', fit);
+  show(i); fit();
+})();
+</script>
+</body>
+</html>

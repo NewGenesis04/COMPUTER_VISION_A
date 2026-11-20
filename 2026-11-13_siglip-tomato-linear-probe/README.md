@@ -1,6 +1,6 @@
 # Computer Vision A — SigLIP Zero-Shot vs Frozen-Backbone Linear Probe on Tomato Maturity
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/<YOUR_GITHUB_USER>/<REPO_NAME>/blob/main/2026-11-13_siglip-tomato-linear-probe/siglip_tomato_linear_probe.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/NewGenesis04/COMPUTER_VISION_A/blob/main/2026-11-13_siglip-tomato-linear-probe/COMPUTER_VISION_A_SIGLIP_FINETUNE.ipynb)
 
 ## Task
 Binary image classification of tomato maturity (**Immature** vs **Mature**). We measure how much a lightweight linear head trained on a **frozen** SigLIP vision encoder improves over SigLIP's **zero-shot** text-prompt classification.

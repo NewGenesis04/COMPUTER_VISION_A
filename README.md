@@ -21,6 +21,7 @@ COMPUTER_VISION_A/
     ├── requirements.txt
     ├── <notebook>.ipynb               ← runnable top to bottom on Colab
     ├── slides.html                    ← presentation (open in a browser)
+    ├── slides-mindmap.html            ← mind-map overview deck (optional)
     └── outputs/                       ← figures, metrics (results.json), small checkpoints
 ```
 
